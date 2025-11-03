@@ -11,99 +11,102 @@ class ACO:
         self.rho = rho
         self.Q = Q
         self.kc = kc
-        self.pheromone = [[1.0 if i != j else 0 for j in range(n)] for i in range(n)]
-        self.city_names = [str(i + 1) for i in range(n)]
-        self.lich_su_kien = []
+        self.phero = [[1.0 if i != j else 0 for j in range(n)] for i in range(n)]
+        self.tp = [str(i + 1) for i in range(n)]
+        self.lichsu = []
 
-    def xac_suat(self, i, j, chua_tham):
-        if j not in chua_tham:
+    def xs(self, i, j, chua):
+        if j not in chua:
             return 0
-        tau = self.pheromone[i][j] ** self.alpha
+        tau = self.phero[i][j] ** self.alpha
         eta = (1.0 / self.kc[i][j]) ** self.beta
         return tau * eta
 
-    def xay_dung_tour(self):
+    def xaytour(self):
         start = random.randint(0, self.n - 1)
         tour = [start]
-        chua_tham = set(range(self.n))
-        chua_tham.remove(start)
-        hien_tai = start
-        while chua_tham:
-            xs = [self.xac_suat(hien_tai, j, chua_tham) for j in range(self.n)]
+        chua = set(range(self.n))
+        chua.remove(start)
+        htai = start
+        while chua:
+            xs = [self.xs(htai, j, chua) for j in range(self.n)]
             tong = sum(xs)
             if tong == 0:
-                ke_tiep = random.choice(list(chua_tham))
+                ktiep = random.choice(list(chua))
             else:
                 xs = [x / tong for x in xs]
-                ke_tiep = random.choices(range(self.n), weights=xs)[0]
-            tour.append(ke_tiep)
-            chua_tham.remove(ke_tiep)
-            hien_tai = ke_tiep
+                ktiep = random.choices(range(self.n), weights=xs)[0]
+            tour.append(ktiep)
+            chua.remove(ktiep)
+            htai = ktiep
         tour.append(start)
         return tour
 
-    def tinh_do_dai(self, tour):
+    def dodai(self, tour):
         return sum(self.kc[tour[i]][tour[i + 1]] for i in range(len(tour) - 1))
 
-    def cap_nhat_pheromone(self, tat_ca_tour, tat_ca_do_dai):
+    def capnhat(self, dstour, dsdai):
         for i in range(self.n):
             for j in range(self.n):
-                self.pheromone[i][j] *= (1 - self.rho)
-        for tour, do_dai in zip(tat_ca_tour, tat_ca_do_dai):
+                self.phero[i][j] *= (1 - self.rho)
+        for tour, dai in zip(dstour, dsdai):
             for i in range(len(tour) - 1):
                 a, b = tour[i], tour[i + 1]
-                delta = self.Q / do_dai
-                self.pheromone[a][b] += delta
-                self.pheromone[b][a] += delta
+                delta = self.Q / dai
+                self.phero[a][b] += delta
+                self.phero[b][a] += delta
 
-    def chay(self, so_vong):
-        best_tour = None
-        best_do_dai = math.inf
-        for v in range(so_vong):
-            tat_ca_tour = []
-            tat_ca_do_dai = []
+    def chay(self, vong):
+        besttour = None
+        bestdai = math.inf
+        vbest = 0
+
+
+        for v in range(vong):
+            dstour = []
+            dsdai = []
             for k in range(self.m):
-                tour = self.xay_dung_tour()
-                do_dai = self.tinh_do_dai(tour)
-                tat_ca_tour.append(tour)
-                tat_ca_do_dai.append(do_dai)
-                if v == 0 and k < 3:
-                    self.lich_su_kien.append(tour)
-                if do_dai < best_do_dai:
-                    best_do_dai = do_dai
-                    best_tour = tour
-            self.cap_nhat_pheromone(tat_ca_tour, tat_ca_do_dai)
-        return best_tour, best_do_dai
+                tour = self.xaytour()
+                dai = self.dodai(tour)
+                dstour.append(tour)
+                dsdai.append(dai)
+                if v == 0 and k < 5:
+                    self.lichsu.append(tour)
+                    print(f"\nKien {k + 1} vong dau:")
+                    print(" -> ".join([f"TP{t + 1}" for t in tour]))
+                    print(f"Do dai: {dai:.2f}\n")
+                if dai < bestdai:
+                    bestdai = dai
+                    besttour = tour
+                    vbest = v + 1
 
-    def ve_bieu_do(self, toa_do, best_tour):
-        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-        axes[0].set_title("Đường đi tối ưu (Best Path)")
-        x = [toa_do[i][0] for i in best_tour] + [toa_do[best_tour[0]][0]]
-        y = [toa_do[i][1] for i in best_tour] + [toa_do[best_tour[0]][1]]
-        axes[0].plot(x, y, 'r-o', label="Đường đi tối ưu")
-        start = best_tour[0]
-        axes[0].plot(toa_do[start][0], toa_do[start][1], 'b*', markersize=12, label="Điểm bắt đầu")
-        for i, (xx, yy) in enumerate(toa_do):
-            axes[0].text(xx, yy + 0.2, f"TP {i+1}", fontsize=8, ha='center')
-        axes[0].set_xlabel("Tọa độ X")
-        axes[0].set_ylabel("Tọa độ Y")
-        axes[0].legend()
-        axes[0].grid(True)
-        axes[1].set_title("3 đường đi của kiến trong vòng đầu")
-        colors = ['blue', 'green', 'orange']
-        markers = ['^', 's', 'D']
-        for i, tour in enumerate(self.lich_su_kien):
-            x = [toa_do[j][0] for j in tour] + [toa_do[tour[0]][0]]
-            y = [toa_do[j][1] for j in tour] + [toa_do[tour[0]][1]]
-            axes[1].plot(x, y, color=colors[i], marker='o', label=f"Kiến {i + 1}")
-            start = tour[0]
-            axes[1].plot(toa_do[start][0], toa_do[start][1], markers[i],
-                         color=colors[i], markersize=10, label=f"Điểm bắt đầu Kiến {i + 1}")
-        for i, (xx, yy) in enumerate(toa_do):
-            axes[1].text(xx, yy + 0.2, f"TP {i+1}", fontsize=8, ha='center')
-        axes[1].set_xlabel("Tọa độ X")
-        axes[1].set_ylabel("Tọa độ Y")
-        axes[1].legend()
-        axes[1].grid(True)
+        print(f"\n Ket qua toi uu dat tai vong: {vbest}")
+        return besttour, bestdai
+
+    def ve(self, td, best):
+        fig, ax = plt.subplots(1, 2, figsize=(14, 6))
+
+        ax[0].set_title("Duong di toi uu")
+        x = [td[i][0] for i in best] + [td[best[0]][0]]
+        y = [td[i][1] for i in best] + [td[best[0]][1]]
+        ax[0].plot(x, y, 'r-o', label="Best Path")
+        start = best[0]
+        ax[0].plot(td[start][0], td[start][1], 'b*', markersize=12, label="Start")
+        for i, (xx, yy) in enumerate(td):
+            ax[0].text(xx, yy + 0.2, f"TP {i+1}", fontsize=8, ha='center')
+        ax[0].legend()
+        ax[0].grid(True)
+
+        ax[1].set_title("5 kien vong dau")
+        mau = ['blue', 'green', 'orange', 'purple', 'brown']
+        for i, tour in enumerate(self.lichsu[:5]):
+            x = [td[j][0] for j in tour] + [td[tour[0]][0]]
+            y = [td[j][1] for j in tour] + [td[tour[0]][1]]
+            ax[1].plot(x, y, color=mau[i], marker='o', label=f"Kien {i+1}")
+        for i, (xx, yy) in enumerate(td):
+            ax[1].text(xx, yy + 0.2, f"TP {i+1}", fontsize=8, ha='center')
+        ax[1].legend()
+        ax[1].grid(True)
+
         plt.tight_layout()
         plt.show()
