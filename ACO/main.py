@@ -3,18 +3,16 @@ from thamso import *
 from aco import ACO
 
 if __name__ == "__main__":
-    n, kc, toa_do = doc_file("25.txt")
+    n, kc, td = docfile("test.txt")
 
-    start_time = time.time()
-
+    bd = time.time()
     aco = ACO(n=n, m=m, alpha=alpha, beta=beta, rho=rho, Q=Q, kc=kc)
-    best_tour, best_do_dai = aco.chay(so_vong=so_vong)
+    besttour, bestdai = aco.chay(vong=vong)
+    kt = time.time()
 
-    end_time = time.time()
+    tentp = [aco.tp[i] for i in besttour]
+    print(" Duong di toi uu:", " → ".join(tentp))
+    print(" Do dai:", round(bestdai, 4))
+    print("Thoi gian chay:", round(kt - bd, 4), "giay")
 
-    tour_chu = [aco.city_names[i] for i in best_tour]
-    print("🔹 Đường đi tối ưu:", " → ".join(tour_chu))
-    print("🔹 Độ dài:", round(best_do_dai, 4))
-    print("⏱️ Thời gian chạy:", round(end_time - start_time, 4), "giây")
-
-    aco.ve_bieu_do(toa_do, best_tour)
+    aco.ve(td, besttour)
