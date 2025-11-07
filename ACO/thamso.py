@@ -13,10 +13,10 @@ def doc_file(ten_file):
     return n, kc, toa_do
 
 # Các tham số của ACO
-n = 5          # số thành phố
 m = 5          # số kiến
 alpha = 1      # trọng số pheromone
 beta = 2       # trọng số heuristic
 rho = 0.5      # hệ số bay hơi pheromone
 Q = 100        # hằng số điều chỉnh lượng pheromone mà mỗi con kiến để lại
 so_vong = 20   # số vòng lặp
+
